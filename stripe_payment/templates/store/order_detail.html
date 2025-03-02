@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Оплата заказа {{ order.id }}{% endblock %}
+
+{% block heading %}Заказ {{ order.id }}{% endblock %}
+
+{% block content %}
+<ul>
+    {% for item in order.items.all %}
+        <li>{{ item.name }} - {{ item.price }} {{ item.currency }}</li>
+    {% endfor %}
+</ul>
+<p>Общая сумма: {{ total_price }} {{ currency }}</p>
+<button id="buy-order-button">Оплатить заказ</button>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var stripe = Stripe("{{ stripe_publishable_key }}");
+    var orderButton = document.getElementById("buy-order-button");
+
+    orderButton.addEventListener("click", function() {
+        fetch("/buy/order/{{ order.id }}", { method: "GET" })
+            .then(response => response.json())
+            .then(session => {
+                if (session.id) {
+                    return stripe.redirectToCheckout({ sessionId: session.id });
+                } else {
+                    console.error("Неверный ID сессии", session);
+                }
+            })
+            .catch(error => console.error("Ошибка:", error));
+    });
+</script>
+{% endblock %}

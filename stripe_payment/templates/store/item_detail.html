@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Товар {{ item.name }}{% endblock %}
+
+{% block heading %}Товар {{ item.name }}{% endblock %}
+
+{% block content %}
+<p>{{ item.description }}</p>
+<p>Стоимость: {{ item.price }} {{ item.currency }}</p>
+<button id="buy-item-button">Купить товар</button>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    var stripe = Stripe("{{ stripe_publishable_key }}");
+
+    document.getElementById("buy-item-button").addEventListener("click", function() {
+        fetch("/buy/{{ item.id }}", { method: "GET" })
+            .then(response => response.json())
+            .then(session => {
+                if (session.id) {
+                    return stripe.redirectToCheckout({ sessionId: session.id });
+                } else {
+                    console.error("Неверный ID сессии:", session);
+                }
+            })
+            .catch(error => console.error("Ошибка:", error));
+    });
+</script>
+{% endblock %}
